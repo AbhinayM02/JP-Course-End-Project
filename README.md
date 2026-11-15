@@ -1,92 +1,45 @@
 # Hospital Appointment Management System
 
-A console-based Java application for managing outpatient appointments, patient records, clinical triage prioritization, and persistent consultation histories using the **Java Collections Framework** and **Object Serialization**.
+A console-based Java application for managing patient records, outpatient appointment schedules, clinical triage prioritization, and persistent consultation histories using the **Java Collections Framework** and **Object Serialization**.
 
----
+## Key Features & Data Structures
 
-## Overview
-
-This project models core hospital scheduling workflows without external database dependencies by pairing complementary Java data structures with custom comparators and fail-safe iterators:
-
-- **Patient Directory (`HashMap<String, Patient>`):** Provides average $O(1)$ patient lookup by ID, demographic management, and chronological consultation history tracking.
-- **Appointment Schedule (`LinkedList<Appointment>`):** Maintains bookings in chronological order with $O(1)$ node insertion/deletion at iterator positions.
-- **Triage & Multi-Criteria Sorting (`Comparator`):** Supports sorting schedules by appointment timestamp (`BY_TIME`), clinical urgency (`BY_PRIORITY`), or combined triage order (`BY_PRIORITY_THEN_TIME`) on defensive copies without disturbing the master schedule.
-- **Safe Traversal & In-Place Mutations (`Iterator` & `ListIterator`):** Handles doctor double-booking checks, chronological mid-list insertions (`ListIterator.add`), priority escalations (`ListIterator.set`), consultation logging, reverse schedule traversal (`ListIterator.previous`), and cancellation/purging (`Iterator.remove`).
-- **Disk Persistence (`Serializable`):** Saves and restores the entire appointment schedule, patient map, and ID sequence counter via binary object streams (`hospital_data.ser`).
-
----
+* **Patient Lookup (`HashMap<String, Patient>`):** Stores patient demographics and consultation histories (`ArrayList<String>`) with average $O(1)$ retrieval by patient ID.
+* **Chronological Schedule (`LinkedList<Appointment>`):** Maintains bookings in sorted time order with $O(1)$ node insertion/deletion at iterator positions.
+* **Triage Sorting (`Comparator`):** Sorts schedule views by timestamp (`BY_TIME`), urgency (`BY_PRIORITY`), or combined triage order (`BY_PRIORITY_THEN_TIME`) without altering the master schedule.
+* **Safe Updates & Traversal (`Iterator` & `ListIterator`):** Performs doctor conflict validation, chronological insertion (`add`), priority escalation and consultation logging (`set`), reverse traversal (`hasPrevious`), and cancellation/purging (`remove`).
+* **Disk Persistence (`Serializable`):** Saves and restores the appointment schedule, patient map, and ID counter via `hospital_data.ser`.
 
 ## Project Structure
 
 ```text
 .
-├── HospitalAppointmentSystem.java   # Main driver, domain models, comparators, and manager
-├── hospital_data.ser                # Generated binary file storing serialized state (created at runtime)
+├── HospitalAppointmentSystem.java   # Driver, domain models, comparators, and AppointmentManager
+├── hospital_data.ser                # Serialized binary state (generated at runtime)
 └── README.md                        # Project documentation
 ```
 
-### Key Classes in `HospitalAppointmentSystem.java`
+## Quick Start
 
-| Class / Enum | Responsibility |
-| :--- | :--- |
-| `HospitalAppointmentSystem` | Entry point demonstrating patient registration, conflict validation, sorting, iterator updates, serialization round-trip, and collection evaluation. |
-| `AppointmentManager` | Core controller managing the `LinkedList` schedule, `HashMap` patient registry, iterator operations, and file I/O. |
-| `Patient` | Serializable entity storing patient ID, name, age, phone number, and an `ArrayList<String>` of consultation records. |
-| `Appointment` | Serializable entity tracking appointment ID, patient ID, doctor name, scheduled `Date`, `Priority`, `Status`, and consultation notes. |
-| `AppointmentComparators` | Defines `BY_TIME`, `BY_PRIORITY`, and `BY_PRIORITY_THEN_TIME` comparators. |
-| `Priority` & `Status` | Enums representing clinical triage levels (`EMERGENCY`, `URGENT`, `ROUTINE`) and booking states (`SCHEDULED`, `COMPLETED`, `CANCELLED`). |
+**Prerequisites:** JDK 8 or higher.
 
----
+```bash
+# Clone the repository
+git clone https://github.com/username/hospital-appointment-system.git
+cd hospital-appointment-system
 
-## Getting Started
+# Compile and run
+javac HospitalAppointmentSystem.java
+java HospitalAppointmentSystem
+```
 
-### Prerequisites
-- **Java Development Kit (JDK):** JDK 8 or higher installed and configured on your system `PATH`.
+## Collection Suitability Overview
 
-### Compilation & Execution
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/username/hospital-appointment-system.git
-   cd hospital-appointment-system
-   ```
-
-2. **Compile the source code:**
-   ```bash
-   javac HospitalAppointmentSystem.java
-   ```
-
-3. **Run the application:**
-   ```bash
-   java HospitalAppointmentSystem
-   ```
-
----
-
-## Features Demonstrated at Runtime
-
-1. **Patient Lookup (`HashMap`):** Registers sample patients (`P001`–`P004`) and retrieves patient records in $O(1)$ time.
-2. **Conflict Detection & Chronological Insertion:** Rejects double-booked doctor time slots and unknown patient IDs, inserting valid bookings into sorted time order using `ListIterator`.
-3. **Comparator Sorting:** Displays schedules sorted strictly by time as well as prioritized by clinical severity (`EMERGENCY` $\rightarrow$ `URGENT` $\rightarrow$ `ROUTINE`).
-4. **Iterator Mutations:**
-   - Escalates patient priority (`ListIterator.set`).
-   - Reschedules existing appointments by removing and re-inserting in sorted order.
-   - Records consultation notes and appends summaries to the patient's medical history.
-   - Traverses the schedule in reverse using `ListIterator.hasPrevious()`.
-   - Cancels individual appointments and purges inactive records via `Iterator.remove()`.
-5. **Serialization Round-Trip:** Writes application state to `hospital_data.ser` using `ObjectOutputStream` and verifies full restoration using `ObjectInputStream`.
-
----
-
-## Collection Suitability Summary
-
-| Collection | Time Complexity (Key Ops) | Suitability in This System |
+| Collection | Key Complexity | Role / Verdict |
 | :--- | :--- | :--- |
-| **`LinkedList`** | $O(1)$ iterator add/remove; $O(n)$ search | **Selected for Schedule:** Efficient mid-list chronological insertion, rescheduling, and bulk purging without element shifting. |
-| **`HashMap`** | $O(1)$ avg get/put | **Selected for Patients:** Fast ID-based retrieval of patient profiles and consultation histories. |
-| **`ArrayList`** | $O(1)$ random access; $O(n)$ mid-insert | **Used for Patient History:** Compact append-only storage for per-patient consultation notes. |
-| **`TreeMap` / `TreeSet`** | $O(\log n)$ sorted operations | Strong alternative if appointments are indexed by a unique composite `(Date, Doctor)` key. |
-| **`PriorityQueue`** | $O(\log n)$ `poll()`; $O(n)$ arbitrary remove | Best suited for a dedicated emergency walk-in triage queue rather than a full timetable. |
-| **`Vector` / `Hashtable`** | Synchronized (legacy overhead) | Avoided in favor of modern collections. |
-
----
+| **`LinkedList`** | $O(1)$ iterator add/remove | **Schedule:** Ideal for frequent mid-list chronological insertion and cancellation. |
+| **`HashMap`** | $O(1)$ avg lookup | **Patients:** Optimal for instant ID-based patient and history retrieval. |
+| **`ArrayList`** | $O(1)$ random access | **Consultation Notes:** Compact append-only storage per patient. |
+| **`TreeMap`** | $O(\log n)$ sorted ops | Good alternative if indexed by a unique `(Date, Doctor)` composite key. |
+| **`PriorityQueue`** | $O(\log n)$ `poll()` | Best suited for a dedicated emergency walk-in triage queue. |
+| **`Vector` / `Hashtable`** | Synchronized overhead | Avoided; legacy collections. |
