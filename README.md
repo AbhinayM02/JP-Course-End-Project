@@ -10,15 +10,6 @@ A console-based Java application for managing patient records, outpatient appoin
 * **Safe Updates & Traversal (`Iterator` & `ListIterator`):** Performs doctor conflict validation, chronological insertion (`add`), priority escalation and consultation logging (`set`), reverse traversal (`hasPrevious`), and cancellation/purging (`remove`).
 * **Disk Persistence (`Serializable`):** Saves and restores the appointment schedule, patient map, and ID counter via `hospital_data.ser`.
 
-## Project Structure
-
-```text
-.
-├── HospitalAppointmentSystem.java   # Driver, domain models, comparators, and AppointmentManager
-├── hospital_data.ser                # Serialized binary state (generated at runtime)
-└── README.md                        # Project documentation
-```
-
 ## Quick Start
 
 **Prerequisites:** JDK 8 or higher.
